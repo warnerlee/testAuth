@@ -3,7 +3,11 @@ const User = require("../models/userModel");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-router.get("/", async (req, res) => { console.log("test"); });
+router.get("/", async (req, res) => {
+    console.log("test");
+    res
+    .status(200);
+});
 
 //Register
 router.post("/", async (req, res) => {
@@ -44,7 +48,6 @@ router.post("/", async (req, res) => {
         });
 
         const savedUser = await newUser.save();
-        
         //login
         const token = jwt.sign({
             user: savedUser._id
@@ -61,7 +64,6 @@ router.post("/", async (req, res) => {
         console.log(err);
         res.status(500).send();
     }
-  
 });
 
 //Login
@@ -76,12 +78,14 @@ router.post("/login", async (req, res) => {
                 .json({errorMessage: "Please enter the required fields."});
 
         const existingUser = await User.findOne({email});
+
         if (!existingUser)
             return res
                 .status(401)
                 .json({errorMessage: "Wrong email or password."});
 
         const passwordCorrect =  await bcrypt.compare(password, existingUser.passwordHash);
+
         if (!passwordCorrect)
             return res
                 .status(401)
@@ -113,6 +117,20 @@ router.get("/logout", (req, res) => {
         expires: new Date(0)
     })
     .send();
+});
+
+router.get("/loggedIn", (req, res) => {
+     try {
+            const token = req.cookies.token;
+            if (!token) return res.json(false);
+
+            jwt.verify(token, process.env.JWT_SECRET);
+
+            res.send(true);
+        } catch (err) {
+            console.error(err);
+            res.json(false);
+        }
 });
 
 module.exports = router;
